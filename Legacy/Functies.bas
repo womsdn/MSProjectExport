@@ -152,7 +152,7 @@ ElseIf ActiveProject.Views(ActiveProject.CurrentView).Type = pjResourceItem Then
 End If
 
 End Sub
-'Geselecteerde taken kopiëren naar het klembord
+'Geselecteerde taken kopiï¿½ren naar het klembord
 Sub CopyTasks(Optional intImageWidth As Integer = 20)
 Dim TC As Task
 Dim seltasks As Tasks
@@ -396,6 +396,7 @@ Public Sub ResetFilter()
         FilterApply "Alle resources"
     End If
 End Sub
+
 Public Sub TotalsPerResourcePerPhase(Optional booResourcesFilter As Boolean = False, _
     Optional booShowOutlineNumbers As Boolean = True, Optional datStartDate As Date = #1/1/1901#, Optional datFinishDate As Date = #1/1/1901#, _
     Optional intTimeScaleData As Integer = pjAssignmentTimescaledWork, Optional intTimeScaleUnit As Integer = pjTimescaleMonths, _
@@ -570,7 +571,7 @@ With appExcel.ActiveWindow.ActiveCell
                                     If tsvTimeScaleValue.Value <> "" Then
                                         If intTimeScaleData = pjAssignmentTimescaledCost Then
                                             .Cells(intRow, 9 + intColumnCounter) = tsvTimeScaleValue.Value
-                                            .Cells(intRow, 9 + intColumnCounter).NumberFormat = "€ #,##0"
+                                            .Cells(intRow, 9 + intColumnCounter).NumberFormat = "ï¿½ #,##0"
                                         Else
                                             .Cells(intRow, 9 + intColumnCounter) = tsvTimeScaleValue.Value / intWorkDiv
                                             .Cells(intRow, 9 + intColumnCounter).NumberFormat = "0"
@@ -597,7 +598,7 @@ With appExcel.ActiveWindow.ActiveCell
                                     Else
                                         .Cells(intRow, 9 + intColumnCounter) = 0
                                         If intTimeScaleData = pjAssignmentTimescaledCost Then
-                                            .Cells(intRow, 9 + intColumnCounter).NumberFormat = "€ #,##0"
+                                            .Cells(intRow, 9 + intColumnCounter).NumberFormat = "ï¿½ #,##0"
                                         Else
                                             .Cells(intRow, 9 + intColumnCounter).NumberFormat = "0"
                                         End If
@@ -626,7 +627,7 @@ With appExcel.ActiveWindow.ActiveCell
                     For intTeller = 1 To intColumnCounter
                         .Cells(intRow, 9 + intTeller).FormulaR1C1 = "=SUBTOTAL(9, R[-" & intAssCounter & "]C:R[-1]C"
                         If intTimeScaleData = pjAssignmentTimescaledCost Then
-                            .Cells(intRow, 9 + intTeller).NumberFormat = "€ #,##0"
+                            .Cells(intRow, 9 + intTeller).NumberFormat = "ï¿½ #,##0"
                         Else
                             .Cells(intRow, 9 + intTeller).NumberFormat = "0"
                         End If
@@ -639,7 +640,7 @@ With appExcel.ActiveWindow.ActiveCell
         End If
     Next
     
-    'Als er één of meerdere personen aan de taken uit de filter hebben gewerkt, moeten ook de totaalregels opgenomen worden.
+    'Als er ï¿½ï¿½n of meerdere personen aan de taken uit de filter hebben gewerkt, moeten ook de totaalregels opgenomen worden.
     If booAnyWork Then
         .Cells(intRow, 1) = "Totaal"
         .Cells(intRow, 4).FormulaR1C1 = "=SUBTOTAL(9, R3C:R[-1]C"
@@ -653,7 +654,7 @@ With appExcel.ActiveWindow.ActiveCell
             For intTeller = 1 To intColumnCounter
                 .Cells(intRow, 9 + intTeller).FormulaR1C1 = "=SUBTOTAL(9, R3C:R[-1]C"
                 If intTimeScaleData = pjAssignmentTimescaledCost Then
-                    .Cells(intRow, 9 + intTeller).NumberFormat = "€ #,##0"
+                    .Cells(intRow, 9 + intTeller).NumberFormat = "ï¿½ #,##0"
                 Else
                     .Cells(intRow, 9 + intTeller).NumberFormat = "0"
                 End If
@@ -675,7 +676,7 @@ Public Sub ResourceExportExcel(Optional intTaskId As Integer = 1, _
     Optional intTimeUnit As Integer = pjTimescaleMonths, _
     Optional booResourcesFilter As Boolean = False, _
     Optional strNumberFormat As String = "0", _
-    Optional strCurrencyFormat As String = "€ #,##0_-", _
+    Optional strCurrencyFormat As String = "ï¿½ #,##0_-", _
     Optional booBrief = True, _
     Optional booMetFunctie = True, _
     Optional booGemarkeerd = False)
@@ -855,8 +856,8 @@ Public Sub ResourceExportExcel(Optional intTaskId As Integer = 1, _
                 Debug.Print rscResource.Name, assAssignment.Task.Name, assAssignment.Work / 60, assAssignment.Cost, assAssignment.CostRateTable, rscResource.CostRateTables(assAssignment.CostRateTable + 1).PayRates(1).StandardRate
                 'Controleer of de assignment voldoet aan het taakfilter wat is meegegeven dmv parameter ResourceExportExcelintTaskId
                 If Left(ActiveProject.Tasks(assAssignment.TaskID).OutlineNumber, Len(strWBSFilter)) = strWBSFilter Then
-                    booAssignments = True 'Er is tenminste één assigment voor de huidige resource gevonden die aan het filter voldoet
-                    booAnyAssignments = True 'Er is tenminste één assignment gevonden voor alle resources
+                    booAssignments = True 'Er is tenminste ï¿½ï¿½n assigment voor de huidige resource gevonden die aan het filter voldoet
+                    booAnyAssignments = True 'Er is tenminste ï¿½ï¿½n assignment gevonden voor alle resources
                     
                     'Haal de TimeScaleValues op van alle typen
                     intTellerType = 0
@@ -1040,7 +1041,7 @@ Public Sub ResourceExportExcel(Optional intTaskId As Integer = 1, _
 
 End Sub
 'Functie RatePerDate
-'Geeft in één string de tarieven voor een resource in een bepaalde periode, gescheiden
+'Geeft in ï¿½ï¿½n string de tarieven voor een resource in een bepaalde periode, gescheiden
 'door een "/". Als geen periode is opgegeven wordt het huidige tarief gegeven
 Public Function RatePerDate(rscResource As Resource, Optional datStartDate As Date = #1/1/1901#, _
     Optional datEndDate As Date = #1/1/1901#, Optional cstCostRateTableIndex As Integer = 1) As String
@@ -1149,7 +1150,7 @@ Next
 If dicOWSs.Count > 0 Then
 
     'Bepalen welke taken nagelopen zullen worden
-    'Als er maar één taak is geselecteerd, krijg je de waarden van die taak, behalve
+    'Als er maar ï¿½ï¿½n taak is geselecteerd, krijg je de waarden van die taak, behalve
     'wanneer die kinderen heeft, dan worden die genomen. Wanneer er meerdere taken
     'geselecteerd zijn, krijg je van die taken de ontwikkeluren. Als de geselecteerde
     'taken niet allemaal hetzelfde niveau hebben, krijg je een foutmelding en wordt
@@ -1259,7 +1260,7 @@ Public Sub TaskExportExcel(Optional datStart As Date = #1/1/1901#, Optional datF
     Optional intTimeUnit As Integer = pjTimescaleMonths, _
     Optional booTaskFilter As Boolean = False, _
     Optional strNumberFormat As String = "0", _
-    Optional strCurrencyFormat As String = "€ #,##0_-", _
+    Optional strCurrencyFormat As String = "ï¿½ #,##0_-", _
     Optional booBrief = True, _
     Optional booGemarkeerd = False)
 
@@ -1550,7 +1551,7 @@ Public Function RollUpResources(Optional tsvScale As Integer = pjTimescaleMonths
         End If
     End If
     
-    'Functie wordt alleen uitgevoerd in taakweergave, wanneer er maar één taak geselecteerd is
+    'Functie wordt alleen uitgevoerd in taakweergave, wanneer er maar ï¿½ï¿½n taak geselecteerd is
     If ActiveProject.Views(ActiveProject.CurrentView).Type = pjTaskItem Then
         On Error GoTo ErrorHandler
         If ActiveSelection.Tasks.Count = 1 Then
@@ -1602,7 +1603,7 @@ Public Function RollUpResources(Optional tsvScale As Integer = pjTimescaleMonths
                 vbCrLf & "Waarschuwingen:" & txtFeedback
         Else
             On Error GoTo 0
-            RollUpResources = "Meer dan één taak geselecteerd"
+            RollUpResources = "Meer dan ï¿½ï¿½n taak geselecteerd"
         End If
     Else
         RollUpResources = "Werkt alleen in taakweergave"
