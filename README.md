@@ -17,3 +17,4 @@ VBA macro to create exports from MS Project files
 
 ## Important links
 http://nhprague.blogspot.nl/2011/07/how-to-create-multi-dimensional.html
+https://analystcave.com/vba-vba-class-tutorial/
