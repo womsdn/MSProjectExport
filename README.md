@@ -14,3 +14,6 @@ VBA macro to create exports from MS Project files
 2. Support for more columns for Work & Cost fields
 3. Support for different Timescales
 4. Export to MarkDown
+
+## Important links
+http://nhprague.blogspot.nl/2011/07/how-to-create-multi-dimensional.html
