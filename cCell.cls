@@ -10,6 +10,7 @@ Attribute VB_Exposed = False
 Option Explicit
 Dim pValue As Variant
 Dim pBold As Boolean
+
 Property Let Value(sValue As Variant)
     pValue = sValue
 End Property
@@ -17,6 +18,7 @@ End Property
 Property Get Value()
     Value = pValue
 End Property
+
 Private Sub Class_Initialize()
     pBold = False
 End Sub
