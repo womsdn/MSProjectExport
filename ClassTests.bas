@@ -2,12 +2,28 @@ Attribute VB_Name = "ClassTests"
 Option Explicit
 Public Sub test()
 
-Dim mytable As cTable
+Dim mycResourcetimeScales As cResourceTimeScales
+Dim datStart As Date
+Dim datFinish As Date
+Dim Rcss As Resources
+Dim Tsks As Tasks
+Dim Tsunit As PjTimescaleUnit
 
-Set mytable = New cTable
-mytable.Create 10, 10
+datStart = #7/3/2017#
+datFinish = #7/3/2017#
+Set Rcss = ActiveProject.Resources
+Set Tsks = ActiveSelection.Tasks
+Tsunit = pjTimescaleMonths
 
-mytable.CellValue(2, 1) = 100
-Debug.Print mytable.CellValue(1, 1)
+Debug.Print
+
+
+Set mycResourcetimeScales = New cResourceTimeScales
+mycResourcetimeScales.Create Rcss, Tsks, datStart, datFinish, Tsunit
+
+
+mycResourcetimeScales.Dump
+
 
 End Sub
+
