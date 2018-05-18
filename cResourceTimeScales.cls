@@ -11,10 +11,10 @@ Option Explicit
 Private pDicResourcesAss As Dictionary
 Private pDicResources As Dictionary
 Private Enum DetailType
-    dtwork = pjAssignmentTimescaledWork
+    dtWork = pjAssignmentTimescaledWork
     dtActualWork = pjAssignmentTimescaledActualWork
-    dtBaseLineWork = pjAssignmentTimescaledBaselineWork
-    dtworkasstotal
+    dtBaselineWork = pjAssignmentTimescaledBaselineWork
+    dtWorkAssTotal
     dtActualWorkAssTotal
     dtBaselineWorkAssTotal
 End Enum
@@ -41,8 +41,6 @@ Public Sub Create(rscResources As Resources, tskTasks As Tasks, datStart As Date
         'Create dictionary item with resource ID as key and add the dictionary which will
         'contain all the tasks to which the resource has assignments and that are in tskTasks
         pDicResourcesAss.Add rscResource.ID, CreateObject("Scripting.Dictionary")
-        pDicResources.Add rscResource.ID, CreateObject("Scripting.Dictionary")
-        pDicResources(rscResource.ID).Add dtBaseLineWork, 0
         
         For Each assAssignment In rscResource.Assignments
             For Each tskTask In tskTasks
@@ -50,11 +48,11 @@ Public Sub Create(rscResources As Resources, tskTasks As Tasks, datStart As Date
                     pDicResourcesAss(rscResource.ID).Add tskTask.ID, CreateObject("Scripting.Dictionary") 'Add dictionary to hold data
                     
                     'Add dtWork key which contains Assignment work timescaledata
-                    pDicResourcesAss(rscResource.ID)(tskTask.ID).Add dtwork, assAssignment.TimeScaleData(datStart, datFinish, dtwork, intTimeScaleUnit)
+                    pDicResourcesAss(rscResource.ID)(tskTask.ID).Add dtWork, assAssignment.TimeScaleData(datStart, datFinish, dtWork, intTimeScaleUnit)
                     'Add dtWorkAssTotal key which contains assignment work total
-                    pDicResourcesAss(rscResource.ID)(tskTask.ID).Add dtworkasstotal, 0
-                    For Each tsvTSV In pDicResourcesAss(rscResource.ID)(tskTask.ID)(dtwork)
-                        pDicResourcesAss(rscResource.ID)(tskTask.ID)(dtworkasstotal) = pDicResourcesAss(rscResource.ID)(tskTask.ID)(dtworkasstotal) + Val(tsvTSV.Value)
+                    pDicResourcesAss(rscResource.ID)(tskTask.ID).Add dtWorkAssTotal, 0
+                    For Each tsvTSV In pDicResourcesAss(rscResource.ID)(tskTask.ID)(dtWork)
+                        pDicResourcesAss(rscResource.ID)(tskTask.ID)(dtWorkAssTotal) = pDicResourcesAss(rscResource.ID)(tskTask.ID)(dtWorkAssTotal) + Val(tsvTSV.Value)
                     Next
                     
                     'Add dtActualWork key which contains actual Assignment work timescaledata
@@ -66,7 +64,7 @@ Public Sub Create(rscResources As Resources, tskTasks As Tasks, datStart As Date
                     Next
                     
                     'Add dtBaselineWork key which contains baseline Assignment work timescaledata
-                    pDicResourcesAss(rscResource.ID)(tskTask.ID).Add dtBaseLineWork, assAssignment.TimeScaleData(datStart, datFinish, dtBaseLineWork, intTimeScaleUnit)
+                    pDicResourcesAss(rscResource.ID)(tskTask.ID).Add dtBaselineWork, assAssignment.TimeScaleData(datStart, datFinish, dtBaselineWork, intTimeScaleUnit)
                     'Add dtBaselineWorkAssTotal key which contains baseline assignment work total
                     'Check if assignment start/finish falls completely in asked period (datStart - datFinish)
                     'This determines the way the assignment total baseline work will be calculated
@@ -79,7 +77,7 @@ Public Sub Create(rscResources As Resources, tskTasks As Tasks, datStart As Date
                         'baseline data is data the user in most cases enters manually and he is
                         'more likely to meticulously administer assignment baselines than timescale baselines
                         'And if the Set Baseline function is used, the data will be synchronized anyway
-                        For Each tsvTSV In pDicResourcesAss(rscResource.ID)(tskTask.ID)(dtBaseLineWork)
+                        For Each tsvTSV In pDicResourcesAss(rscResource.ID)(tskTask.ID)(dtBaselineWork)
                             pDicResourcesAss(rscResource.ID)(tskTask.ID)(dtBaselineWorkAssTotal) = pDicResourcesAss(rscResource.ID)(tskTask.ID)(dtBaselineWorkAssTotal) + Val(tsvTSV.Value)
                         Next
                     End If
@@ -92,7 +90,7 @@ Public Sub Create(rscResources As Resources, tskTasks As Tasks, datStart As Date
                         'baseline data is data the user in most cases enters manually and he is
                         'more likely to meticulously administer assignment baselines than timescale baselines
                         'And if the Set Baseline function is used, the data will be synchronized anyway
-                        pDicResources(rscResource.ID)(dtBaseLineWork) = pDicResources(rscResource.ID)(dtBaseLineWork) + assAssignment.BaselineWork
+                        pDicResources(rscResource.ID)(dtBaselineWork) = pDicResources(rscResource.ID)(dtBaselineWork) + assAssignment.BaselineWork
                     Else
                         'If not then the baseline has to be calculated with the timscale data, that happens further down the line if this boolean is set to false
                         booAssWithinAskedPeriod = False
@@ -103,28 +101,20 @@ Public Sub Create(rscResources As Resources, tskTasks As Tasks, datStart As Date
         'If there are no assignments for the resource, then remove it from the dictionary
         If pDicResourcesAss(rscResource.ID).Count = 0 Then
             pDicResourcesAss.Remove (rscResource.ID)
-            pDicResources.Remove (rscResource.ID)
-        'else calculate the total work assignements for the resources
+        'else calculate the total work assignements for the resource
         Else
-            'Set start value
-            pDicResources(rscResource.ID).Add dtwork, 0
+            'Initialize dictionary for rscResource totals and set start values
+            pDicResources.Add rscResource.ID, CreateObject("Scripting.Dictionary")
+            pDicResources(rscResource.ID).Add dtWork, 0
             pDicResources(rscResource.ID).Add dtActualWork, 0
-            
-            'Recalculate baseline work if assAssignments are not within asked period
-            If Not booAssWithinAskedPeriod Then pDicResources(rscResource.ID)(dtBaseLineWork) = 0
-            
-            'Iterate through assignments
+            pDicResources(rscResource.ID).Add dtBaselineWork, 0
+                      
+            'Iterate through totals of assignments (keys in pDicResourcesAss of the rscResource)
+            '
             For Each tskID In pDicResourcesAss(rscResource.ID).Keys
-                For intCounter = 1 To pDicResourcesAss(rscResource.ID)(tskID)(dtwork).Count
-                    pDicResources(rscResource.ID)(dtwork) = pDicResources(rscResource.ID)(dtwork) + Val(pDicResourcesAss(rscResource.ID)(tskID)(dtwork)(intCounter).Value)
-                    pDicResources(rscResource.ID)(dtActualWork) = pDicResources(rscResource.ID)(dtActualWork) + Val(pDicResourcesAss(rscResource.ID)(tskID)(dtActualWork)(intCounter).Value)
-                    If Not booAssWithinAskedPeriod Then
-                        pDicResources(rscResource.ID)(dtBaseLineWork) = pDicResources(rscResource.ID)(dtBaseLineWork) + Val(pDicResourcesAss(rscResource.ID)(tskID)(dtBaseLineWork)(intCounter).Value)
-                    End If
-                Next
-                
-                'If all assignments fall within the asked range (datStart - datPeriod) then the baseline work is equal to the total of
-                
+                pDicResources(rscResource.ID)(dtWork) = pDicResources(rscResource.ID)(dtWork) + pDicResourcesAss(rscResource.ID)(tskID)(dtWorkAssTotal)
+                pDicResources(rscResource.ID)(dtActualWork) = pDicResources(rscResource.ID)(dtActualWork) + pDicResourcesAss(rscResource.ID)(tskID)(dtActualWorkAssTotal)
+                pDicResources(rscResource.ID)(dtBaselineWork) = pDicResources(rscResource.ID)(dtBaselineWork) + pDicResourcesAss(rscResource.ID)(tskID)(dtBaselineWorkAssTotal)
             Next
         End If
     Next
@@ -140,9 +130,9 @@ Public Sub Dump()
     For Each rscID In pDicResourcesAss.Keys
         Debug.Print ActiveProject.Resources(rscID).Name
         For Each tskID In pDicResourcesAss(rscID).Keys
-            strString = ActiveProject.Tasks(tskID).Name & vbTab & pDicResourcesAss(rscID)(tskID)(dtworkasstotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1)
-            For intCounter = 1 To pDicResourcesAss(rscID)(tskID)(dtwork).Count
-                strString = strString & vbTab & Val(pDicResourcesAss(rscID)(tskID)(dtwork)(intCounter).Value) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1)
+            strString = ActiveProject.Tasks(tskID).Name & vbTab & pDicResourcesAss(rscID)(tskID)(dtWorkAssTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1)
+            For intCounter = 1 To pDicResourcesAss(rscID)(tskID)(dtWork).Count
+                strString = strString & vbTab & Val(pDicResourcesAss(rscID)(tskID)(dtWork)(intCounter).Value) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1)
             Next
             Debug.Print strString
         Next
