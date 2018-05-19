@@ -11,12 +11,15 @@ Option Explicit
 Private pDicResourcesAss As Dictionary
 Private pDicResources As Dictionary
 Private Enum DetailType
-    dtWork = pjAssignmentTimescaledWork
+    dtwork = pjAssignmentTimescaledWork
     dtActualWork = pjAssignmentTimescaledActualWork
     dtBaselineWork = pjAssignmentTimescaledBaselineWork
     dtWorkAssTotal
     dtActualWorkAssTotal
     dtBaselineWorkAssTotal
+    dtWorkTotalTimescales
+    dtActualWorkTotalTimescales
+    dtBaselineWorkTotalTimescales
 End Enum
 
 'Create multidimensional pDicResourcesAss dictionary with following structure:
@@ -40,17 +43,31 @@ Public Sub Create(rscResources As Resources, tskTasks As Tasks, datStart As Date
         'contain all the tasks to which the resource has assignments and that are in tskTasks
         pDicResourcesAss.Add rscResource.ID, CreateObject("Scripting.Dictionary")
         
+        'Initialize dictionary for rscResource totals
+        pDicResources.Add rscResource.ID, CreateObject("Scripting.Dictionary")
+        
+        'Initialize dictionary for rscResource timescale totals and set start values
+        pDicResources(rscResource.ID).Add dtWorkTotalTimescales, CreateObject("Scripting.Dictionary")
+        pDicResources(rscResource.ID).Add dtActualWorkTotalTimescales, CreateObject("Scripting.Dictionary")
+        pDicResources(rscResource.ID).Add dtBaselineWorkTotalTimescales, CreateObject("Scripting.Dictionary")
+        
         For Each assAssignment In rscResource.Assignments
             For Each tskTask In tskTasks
                 If assAssignment.TaskID = tskTask.ID Then
                     pDicResourcesAss(rscResource.ID).Add tskTask.ID, CreateObject("Scripting.Dictionary") 'Add dictionary to hold data
                     
                     'Add dtWork key which contains Assignment work timescaledata
-                    pDicResourcesAss(rscResource.ID)(tskTask.ID).Add dtWork, assAssignment.TimeScaleData(datStart, datFinish, dtWork, intTimeScaleUnit)
+                    pDicResourcesAss(rscResource.ID)(tskTask.ID).Add dtwork, assAssignment.TimeScaleData(datStart, datFinish, dtwork, intTimeScaleUnit)
                     'Add dtWorkAssTotal key which contains assignment work total
                     pDicResourcesAss(rscResource.ID)(tskTask.ID).Add dtWorkAssTotal, 0
-                    For Each tsvTSV In pDicResourcesAss(rscResource.ID)(tskTask.ID)(dtWork)
+                    For Each tsvTSV In pDicResourcesAss(rscResource.ID)(tskTask.ID)(dtwork)
                         pDicResourcesAss(rscResource.ID)(tskTask.ID)(dtWorkAssTotal) = pDicResourcesAss(rscResource.ID)(tskTask.ID)(dtWorkAssTotal) + Val(tsvTSV.Value)
+                        'Add timescale values to the dictionary with total timescale value for the resource per timeunit
+                        If pDicResources(rscResource.ID)(dtWorkTotalTimescales).Exists(tsvTSV.StartDate) Then
+                            pDicResources(rscResource.ID)(dtWorkTotalTimescales)(tsvTSV.StartDate) = pDicResources(rscResource.ID)(dtWorkTotalTimescales)(tsvTSV.StartDate) + Val(tsvTSV.Value)
+                        Else
+                            pDicResources(rscResource.ID)(dtWorkTotalTimescales).Add tsvTSV.StartDate, Val(tsvTSV.Value)
+                        End If
                     Next
                     
                     'Add dtActualWork key which contains actual Assignment work timescaledata
@@ -59,6 +76,12 @@ Public Sub Create(rscResources As Resources, tskTasks As Tasks, datStart As Date
                     pDicResourcesAss(rscResource.ID)(tskTask.ID).Add dtActualWorkAssTotal, 0
                     For Each tsvTSV In pDicResourcesAss(rscResource.ID)(tskTask.ID)(dtActualWork)
                         pDicResourcesAss(rscResource.ID)(tskTask.ID)(dtActualWorkAssTotal) = pDicResourcesAss(rscResource.ID)(tskTask.ID)(dtActualWorkAssTotal) + Val(tsvTSV.Value)
+                        'Add timescale values to the dictionary with total timescale value for the resource per timeunit
+                        If pDicResources(rscResource.ID)(dtActualWorkTotalTimescales).Exists(tsvTSV.StartDate) Then
+                            pDicResources(rscResource.ID)(dtActualWorkTotalTimescales)(tsvTSV.StartDate) = pDicResources(rscResource.ID)(dtActualWorkTotalTimescales)(tsvTSV.StartDate) + Val(tsvTSV.Value)
+                        Else
+                            pDicResources(rscResource.ID)(dtActualWorkTotalTimescales).Add tsvTSV.StartDate, Val(tsvTSV.Value)
+                        End If
                     Next
                     
                     'Add dtBaselineWork key which contains baseline Assignment work timescaledata
@@ -81,6 +104,15 @@ Public Sub Create(rscResources As Resources, tskTasks As Tasks, datStart As Date
                         Next
                     End If
                     
+                    'Add timescale values to the dictionary with total timescale value for the resource per timeunit
+                    For Each tsvTSV In pDicResourcesAss(rscResource.ID)(tskTask.ID)(dtBaselineWork)
+                        If pDicResources(rscResource.ID)(dtBaselineWorkTotalTimescales).Exists(tsvTSV.StartDate) Then
+                            pDicResources(rscResource.ID)(dtBaselineWorkTotalTimescales)(tsvTSV.StartDate) = pDicResources(rscResource.ID)(dtBaselineWorkTotalTimescales)(tsvTSV.StartDate) + Val(tsvTSV.Value)
+                        Else
+                            pDicResources(rscResource.ID)(dtBaselineWorkTotalTimescales).Add tsvTSV.StartDate, Val(tsvTSV.Value)
+                        End If
+                    Next
+                    
                 End If
             Next
         Next
@@ -89,15 +121,14 @@ Public Sub Create(rscResources As Resources, tskTasks As Tasks, datStart As Date
             pDicResourcesAss.Remove (rscResource.ID)
         'else calculate the total work assignements for the resource
         Else
-            'Initialize dictionary for rscResource totals and set start values
-            pDicResources.Add rscResource.ID, CreateObject("Scripting.Dictionary")
-            pDicResources(rscResource.ID).Add dtWork, 0
+            'Set start values for rscResource totals
+            pDicResources(rscResource.ID).Add dtwork, 0
             pDicResources(rscResource.ID).Add dtActualWork, 0
             pDicResources(rscResource.ID).Add dtBaselineWork, 0
                       
             'Iterate through totals of assignments (keys in pDicResourcesAss of the rscResource)
             For Each tskID In pDicResourcesAss(rscResource.ID).Keys
-                pDicResources(rscResource.ID)(dtWork) = pDicResources(rscResource.ID)(dtWork) + pDicResourcesAss(rscResource.ID)(tskID)(dtWorkAssTotal)
+                pDicResources(rscResource.ID)(dtwork) = pDicResources(rscResource.ID)(dtwork) + pDicResourcesAss(rscResource.ID)(tskID)(dtWorkAssTotal)
                 pDicResources(rscResource.ID)(dtActualWork) = pDicResources(rscResource.ID)(dtActualWork) + pDicResourcesAss(rscResource.ID)(tskID)(dtActualWorkAssTotal)
                 pDicResources(rscResource.ID)(dtBaselineWork) = pDicResources(rscResource.ID)(dtBaselineWork) + pDicResourcesAss(rscResource.ID)(tskID)(dtBaselineWorkAssTotal)
             Next
@@ -108,6 +139,7 @@ End Sub
 Public Sub Dump()
     Dim rscID As Variant
     Dim tskID As Variant
+    Dim dtStart As Variant
     Dim tsv As TimeScaleValue
     Dim strString As String
     Dim intCounter As Integer
@@ -115,11 +147,17 @@ Public Sub Dump()
     For Each rscID In pDicResourcesAss.Keys
         Debug.Print ActiveProject.Resources(rscID).Name
         For Each tskID In pDicResourcesAss(rscID).Keys
-            strString = ActiveProject.Tasks(tskID).Name & vbTab & pDicResourcesAss(rscID)(tskID)(dtWorkAssTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1)
-            For intCounter = 1 To pDicResourcesAss(rscID)(tskID)(dtWork).Count
-                strString = strString & vbTab & Val(pDicResourcesAss(rscID)(tskID)(dtWork)(intCounter).Value) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1)
+            strString = ActiveProject.Tasks(tskID).Name & vbTab
+            For intCounter = 1 To pDicResourcesAss(rscID)(tskID)(dtwork).Count
+                strString = strString & vbTab & Round(Val(pDicResourcesAss(rscID)(tskID)(dtwork)(intCounter).Value) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1)
             Next
+            strString = strString & vbTab & Round(pDicResourcesAss(rscID)(tskID)(dtWorkAssTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1)
             Debug.Print strString
         Next
+        strString = vttab
+        For Each dtStart In pDicResources(rscID)(dtWorkTotalTimescales).Keys
+            strString = strString & vbTab & Round(pDicResources(rscID)(dtWorkTotalTimescales)(dtStart) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1)
+        Next
+        Debug.Print strString & vbTab & Round(pDicResources(rscID)(dtwork) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1)
     Next
 End Sub
