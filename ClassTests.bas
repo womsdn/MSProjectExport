@@ -9,8 +9,8 @@ Dim Rcss As Resources
 Dim Tsks As Tasks
 Dim Tsunit As PjTimescaleUnit
 
-datStart = #7/3/2017#
-datFinish = #7/3/2017#
+datStart = #1/1/2018#
+datFinish = #3/2/2018#
 Set Rcss = ActiveProject.Resources
 Set Tsks = ActiveSelection.Tasks
 Tsunit = pjTimescaleMonths
@@ -19,6 +19,7 @@ Debug.Print
 
 
 Set mycResourcetimeScales = New cResourceTimeScales
+
 mycResourcetimeScales.Create Rcss, Tsks, datStart, datFinish, Tsunit
 
 
