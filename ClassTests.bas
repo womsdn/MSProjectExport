@@ -9,11 +9,11 @@ Dim Rcss As Resources
 Dim Tsks As Tasks
 Dim Tsunit As PjTimescaleUnit
 
-datStart = #1/1/2018#
-datFinish = #3/2/2018#
+datStart = #7/3/2017#
+datFinish = #6/29/2018#
 Set Rcss = ActiveProject.Resources
 Set Tsks = ActiveSelection.Tasks
-Tsunit = pjTimescaleMonths
+Tsunit = pjTimescaleHalfYears
 
 Debug.Print
 
@@ -21,10 +21,20 @@ Debug.Print
 Set mycResourcetimeScales = New cResourceTimeScales
 
 mycResourcetimeScales.Create Rcss, Tsks, datStart, datFinish, Tsunit
+'mycResourcetimeScales.Create Rcss, Tsks
 
 
-mycResourcetimeScales.Dump
+mycResourcetimeScales.Dump2MarkDown
 
 
 End Sub
 
+Public Sub RenameResources()
+
+Dim rsc As Resource
+
+For Each rsc In ActiveProject.Resources
+    rsc.Name = "Employee " & rsc.ID
+Next
+
+End Sub
