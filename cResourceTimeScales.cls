@@ -23,6 +23,8 @@ Private Declare Function lstrcpy Lib "kernel32.dll" Alias "lstrcpyW" (ByVal lpSt
 Private pDicResourcesAss As Dictionary
 Private pDicResources As Dictionary
 Private pDicTotal As Dictionary
+Private pTimeScaleUnit As PjTimescaleUnit
+
 Private Enum DetailType
     dtWorkAssTSVs
     dtWorkAssTotal
@@ -88,7 +90,8 @@ End Enum
 '   dtVarianceWorkTotal - key for integer that contains total variance work for all asked resources in asked period
 
 
-Public Sub Create(rscResources As Resources, tskTasks As Tasks, datStart As Date, datFinish As Date, intTimeScaleUnit As PjTimescaleUnit)
+Public Sub Create(rscResources As Resources, tskTasks As Tasks, Optional datStart As Date = #1/1/1901#, _
+    Optional datFinish As Date = #1/1/1901#, Optional intTimeScaleUnit As PjTimescaleUnit = pjTimescaleMonths)
     Dim rscResource As Resource
     Dim tskTask As Task
     Dim assAssignment As Assignment
@@ -101,6 +104,31 @@ Public Sub Create(rscResources As Resources, tskTasks As Tasks, datStart As Date
     Set pDicResourcesAss = New Dictionary
     Set pDicResources = New Dictionary
     Set pDicTotal = New Dictionary
+    pTimeScaleUnit = intTimeScaleUnit
+    
+    'If datFinish lies before datStart then set to default values
+    If datStart > datFinish Then
+        datStart = #1/1/1901#
+        datFinish = #1/1/1901#
+    End If
+    
+    'If default values are selected then choose earliest start dat and latest finish date
+    If datStart = #1/1/1901# Then
+        datStart = tskTasks(1).Start
+        For Each tskTask In tskTasks
+            If tskTask.Start < datStart Then
+                datStart = tskTask.Start
+            End If
+        Next
+    End If
+    If datFinish = #1/1/1901# Then
+        datFinish = tskTasks(1).Finish
+        For Each tskTask In tskTasks
+            If tskTask.Finish > datFinish Then
+                datFinish = tskTask.Finish
+            End If
+        Next
+    End If
     
     For Each rscResource In rscResources
        
@@ -312,46 +340,58 @@ Public Sub Dump2MarkDown()
     Dim varValue As Variant
     Dim strOutput As String
     Dim intCounter As Integer
+    Dim strDateFormat As String
     
-    strOutput = "Resource|Total work|Actual work|Remaining work|Baseline work|Variance work|"
-    For Each datDate In pDicResources.Items(0)(dtWorkRscTSVs).Keys
-        strOutput = strOutput & datDate & "|"
-    Next
-    strOutput = Left(strOutput, Len(strOutput) - 1) & vbCrLf
-    For intCounter = 1 To UBound(Split(strOutput, "|"))
-        strOutput = strOutput & "-|"
-    Next
-    strOutput = strOutput & "-" & vbCrLf
+    If pDicResources.Count > 0 Then
+        Select Case pTimeScaleUnit
+            Case pjTimescaleMonths, pjTimescaleHalfYears, pjTimescaleQuarters, pjTimescaleYears
+                strDateFormat = "m/yy"
+            Case pjTimescaleHours, pjTimescaleMinutes
+                strDateFormat = "d/m/yy hh:mm:ss"
+            Case Else
+                strDateFormat = "d/m/yy"
+        End Select
     
-    For Each rscID In pDicResources.Keys
-        strOutput = strOutput & ActiveProject.Resources(rscID).Name & "|" & _
-            pDicResources(rscID)(dtWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1) & "|" & _
-            pDicResources(rscID)(dtActualWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1) & "|" & _
-            pDicResources(rscID)(dtRemainingWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1) & "|" & _
-            pDicResources(rscID)(dtBaselineWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1) & "|" & _
-            pDicResources(rscID)(dtVarianceWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1) & "|"
-        For Each varValue In pDicResources(rscID)(dtWorkRscTSVs).Keys
-            strOutput = strOutput & pDicResources(rscID)(dtWorkRscTSVs)(varValue) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1) & _
-            "<br>" & pDicResources(rscID)(dtActualWorkRscTSVs)(varValue) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1) & _
-            "<br>" & pDicResources(rscID)(dtBaselineWorkRscTSVs)(varValue) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1) & _
-            "|"
+        strOutput = "Resource|Total work|Actual work|Remaining work|Baseline work|Variance work|"
+        For Each datDate In pDicResources.Items(0)(dtWorkRscTSVs).Keys
+            strOutput = strOutput & Format(datDate, strDateFormat) & "|"
         Next
-    strOutput = Left(strOutput, Len(strOutput) - 1) & vbCrLf
-    Next
-    
-    strOutput = strOutput & "Totaal|" & pDicTotal(dtWorkTotal) / 60 & "|" & _
-        pDicTotal(dtActualWorkTotal) / 60 & "|" & _
-        pDicTotal(dtRemainingWorkTotal) / 60 & "|" & _
-        pDicTotal(dtBaselineWorkTotal) / 60 & "|" & _
-        pDicTotal(dtVarianceWorkTotal) / 60
-        For Each varValue In pDicTotal(dtWorkTSVs).Keys
-            strOutput = strOutput & "|" & pDicTotal(dtWorkTSVs)(varValue) / 60 & _
-            "<br>" & pDicTotal(dtActualWorkTSVs)(varValue) / 60 & _
-            "<br>" & pDicTotal(dtBaselineWorkTSVs)(varValue) / 60
+        strOutput = Left(strOutput, Len(strOutput) - 1) & vbCrLf
+        For intCounter = 1 To UBound(Split(strOutput, "|"))
+            strOutput = strOutput & "-|"
         Next
-    Debug.Print strOutput
-    
-    SetClipboard (strOutput)
+        strOutput = strOutput & "-" & vbCrLf
+        
+        For Each rscID In pDicResources.Keys
+            strOutput = strOutput & ActiveProject.Resources(rscID).Name & "|" & _
+                Round(pDicResources(rscID)(dtWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & "|" & _
+                Round(pDicResources(rscID)(dtActualWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & "|" & _
+                Round(pDicResources(rscID)(dtRemainingWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & "|" & _
+                Round(pDicResources(rscID)(dtBaselineWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & "|" & _
+                Round(pDicResources(rscID)(dtVarianceWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & "|"
+            For Each varValue In pDicResources(rscID)(dtWorkRscTSVs).Keys
+                strOutput = strOutput & Round(pDicResources(rscID)(dtWorkRscTSVs)(varValue) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & _
+                "<br>" & Round(pDicResources(rscID)(dtActualWorkRscTSVs)(varValue) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & _
+                "<br>" & Round(pDicResources(rscID)(dtBaselineWorkRscTSVs)(varValue) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & _
+                "|"
+            Next
+        strOutput = Left(strOutput, Len(strOutput) - 1) & vbCrLf
+        Next
+        
+        strOutput = strOutput & "Totaal|" & Round(pDicTotal(dtWorkTotal) / 60, 1) & "|" & _
+            Round(pDicTotal(dtActualWorkTotal) / 60, 1) & "|" & _
+            Round(pDicTotal(dtRemainingWorkTotal) / 60, 1) & "|" & _
+            Round(pDicTotal(dtBaselineWorkTotal) / 60, 1) & "|" & _
+            Round(pDicTotal(dtVarianceWorkTotal) / 60, 1)
+            For Each varValue In pDicTotal(dtWorkTSVs).Keys
+                strOutput = strOutput & "|" & Round(pDicTotal(dtWorkTSVs)(varValue) / 60, 1) & _
+                "<br>" & Round(pDicTotal(dtActualWorkTSVs)(varValue) / 60, 1) & _
+                "<br>" & Round(pDicTotal(dtBaselineWorkTSVs)(varValue) / 60, 1)
+            Next
+        Debug.Print strOutput
+        
+        SetClipboard (strOutput)
+    End If
 End Sub
 Private Sub SetClipboard(sUniText As String)
     Dim iStrPtr As Long
