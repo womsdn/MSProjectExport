@@ -344,15 +344,10 @@ Public Sub Dump2MarkDown()
     
     If pDicResources.Count > 0 Then
         Select Case pTimeScaleUnit
-<<<<<<< HEAD
             Case pjTimescaleMonths, pjTimescaleHalfYears, pjTimescaleQuarters, pjTimescaleYears
                 strDateFormat = "m/yy"
             Case pjTimescaleHours, pjTimescaleMinutes
                 strDateFormat = "d/m/yy hh:mm:ss"
-=======
-            Case pjTimescaleMonths
-                strDateFormat = "m/yy"
->>>>>>> bd9162d54608f28ad2a6ed98339ba6c3c8e5cf2c
             Case Else
                 strDateFormat = "d/m/yy"
         End Select
@@ -369,7 +364,6 @@ Public Sub Dump2MarkDown()
         
         For Each rscID In pDicResources.Keys
             strOutput = strOutput & ActiveProject.Resources(rscID).Name & "|" & _
-<<<<<<< HEAD
                 Round(pDicResources(rscID)(dtWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & "|" & _
                 Round(pDicResources(rscID)(dtActualWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & "|" & _
                 Round(pDicResources(rscID)(dtRemainingWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & "|" & _
@@ -379,23 +373,11 @@ Public Sub Dump2MarkDown()
                 strOutput = strOutput & Round(pDicResources(rscID)(dtWorkRscTSVs)(varValue) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & _
                 "<br>" & Round(pDicResources(rscID)(dtActualWorkRscTSVs)(varValue) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & _
                 "<br>" & Round(pDicResources(rscID)(dtBaselineWorkRscTSVs)(varValue) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & _
-=======
-                pDicResources(rscID)(dtWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1) & "|" & _
-                pDicResources(rscID)(dtActualWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1) & "|" & _
-                pDicResources(rscID)(dtRemainingWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1) & "|" & _
-                pDicResources(rscID)(dtBaselineWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1) & "|" & _
-                pDicResources(rscID)(dtVarianceWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1) & "|"
-            For Each varValue In pDicResources(rscID)(dtWorkRscTSVs).Keys
-                strOutput = strOutput & pDicResources(rscID)(dtWorkRscTSVs)(varValue) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1) & _
-                "<br>" & pDicResources(rscID)(dtActualWorkRscTSVs)(varValue) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1) & _
-                "<br>" & pDicResources(rscID)(dtBaselineWorkRscTSVs)(varValue) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1) & _
->>>>>>> bd9162d54608f28ad2a6ed98339ba6c3c8e5cf2c
                 "|"
             Next
         strOutput = Left(strOutput, Len(strOutput) - 1) & vbCrLf
         Next
         
-<<<<<<< HEAD
         strOutput = strOutput & "Totaal|" & Round(pDicTotal(dtWorkTotal) / 60, 1) & "|" & _
             Round(pDicTotal(dtActualWorkTotal) / 60, 1) & "|" & _
             Round(pDicTotal(dtRemainingWorkTotal) / 60, 1) & "|" & _
@@ -405,17 +387,6 @@ Public Sub Dump2MarkDown()
                 strOutput = strOutput & "|" & Round(pDicTotal(dtWorkTSVs)(varValue) / 60, 1) & _
                 "<br>" & Round(pDicTotal(dtActualWorkTSVs)(varValue) / 60, 1) & _
                 "<br>" & Round(pDicTotal(dtBaselineWorkTSVs)(varValue) / 60, 1)
-=======
-        strOutput = strOutput & "Totaal|" & pDicTotal(dtWorkTotal) / 60 & "|" & _
-            pDicTotal(dtActualWorkTotal) / 60 & "|" & _
-            pDicTotal(dtRemainingWorkTotal) / 60 & "|" & _
-            pDicTotal(dtBaselineWorkTotal) / 60 & "|" & _
-            pDicTotal(dtVarianceWorkTotal) / 60
-            For Each varValue In pDicTotal(dtWorkTSVs).Keys
-                strOutput = strOutput & "|" & pDicTotal(dtWorkTSVs)(varValue) / 60 & _
-                "<br>" & pDicTotal(dtActualWorkTSVs)(varValue) / 60 & _
-                "<br>" & pDicTotal(dtBaselineWorkTSVs)(varValue) / 60
->>>>>>> bd9162d54608f28ad2a6ed98339ba6c3c8e5cf2c
             Next
         Debug.Print strOutput
         
