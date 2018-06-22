@@ -288,7 +288,6 @@ Public Sub Create(rscResources As Resources, tskTasks As Tasks, Optional datStar
                     End If
                 Next
                 'Calculate baseline work total
-                'TODO: Check if asked period falls within task period, you know the drill
                 pDicTotal(dtBaselineWorkTotal) = pDicTotal(dtBaselineWorkTotal) + pDicResources(rscID)(dtBaselineWorkRscTotal)
             End If
             
@@ -341,8 +340,12 @@ Public Sub Dump2MarkDown()
     Dim strOutput As String
     Dim intCounter As Integer
     Dim strDateFormat As String
+    Dim varAlignLeft As Variant
+    Dim varAlignCenter As Variant
     
+    'Only export if asked resources have assignments for asked tasks in asked period
     If pDicResources.Count > 0 Then
+        'Determine date format to use, based on asked time scale unit
         Select Case pTimeScaleUnit
             Case pjTimescaleMonths, pjTimescaleHalfYears, pjTimescaleQuarters, pjTimescaleYears
                 strDateFormat = "m/yy"
@@ -352,41 +355,56 @@ Public Sub Dump2MarkDown()
                 strDateFormat = "d/m/yy"
         End Select
     
-        strOutput = "Resource|Total work|Actual work|Remaining work|Baseline work|Variance work|"
+        'Header of the output table
+        strOutput = "Resource|Total<br>work|Actual<br>work|Remaining<br>work|Baseline<br>work|Variance<br>work|Type|"
+        varAlignLeft = Array(1, 7)
+        
+        'Add dates to the header
         For Each datDate In pDicResources.Items(0)(dtWorkRscTSVs).Keys
             strOutput = strOutput & Format(datDate, strDateFormat) & "|"
         Next
         strOutput = Left(strOutput, Len(strOutput) - 1) & vbCrLf
-        For intCounter = 1 To UBound(Split(strOutput, "|"))
-            strOutput = strOutput & "-|"
-        Next
-        strOutput = strOutput & "-" & vbCrLf
         
+        'Add a line with alignment markup
+        For intCounter = 1 To UBound(Split(strOutput, "|")) + 1
+            If IsInArray(intCounter, varAlignLeft) Then
+                strOutput = strOutput & ":-|"
+            ElseIf IsInArray(intCounter, varAlignCenter) Then
+                strOutput = strOutput & "-|"
+            Else
+                strOutput = strOutput & "-:|"
+            End If
+        Next
+        strOutput = Left(strOutput, Len(strOutput) - 1) & vbCrLf
+        
+        'Loop through resources
         For Each rscID In pDicResources.Keys
+            'Add total values
             strOutput = strOutput & ActiveProject.Resources(rscID).Name & "|" & _
                 Round(pDicResources(rscID)(dtWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & "|" & _
                 Round(pDicResources(rscID)(dtActualWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & "|" & _
                 Round(pDicResources(rscID)(dtRemainingWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & "|" & _
                 Round(pDicResources(rscID)(dtBaselineWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & "|" & _
-                Round(pDicResources(rscID)(dtVarianceWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & "|"
+                Round(pDicResources(rscID)(dtVarianceWorkRscTotal) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & "|" & _
+                "Planned<br>Actual|"
+            'Add time scale values
             For Each varValue In pDicResources(rscID)(dtWorkRscTSVs).Keys
                 strOutput = strOutput & Round(pDicResources(rscID)(dtWorkRscTSVs)(varValue) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & _
                 "<br>" & Round(pDicResources(rscID)(dtActualWorkRscTSVs)(varValue) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & _
-                "<br>" & Round(pDicResources(rscID)(dtBaselineWorkRscTSVs)(varValue) / IIf(ActiveProject.Resources(rscID).Type = pjResourceTypeWork, 60, 1), 1) & _
                 "|"
             Next
         strOutput = Left(strOutput, Len(strOutput) - 1) & vbCrLf
         Next
         
+        'Add totals row
         strOutput = strOutput & "Totaal|" & Round(pDicTotal(dtWorkTotal) / 60, 1) & "|" & _
             Round(pDicTotal(dtActualWorkTotal) / 60, 1) & "|" & _
             Round(pDicTotal(dtRemainingWorkTotal) / 60, 1) & "|" & _
             Round(pDicTotal(dtBaselineWorkTotal) / 60, 1) & "|" & _
-            Round(pDicTotal(dtVarianceWorkTotal) / 60, 1)
+            Round(pDicTotal(dtVarianceWorkTotal) / 60, 1) & "|Planned<br>Actual"
             For Each varValue In pDicTotal(dtWorkTSVs).Keys
                 strOutput = strOutput & "|" & Round(pDicTotal(dtWorkTSVs)(varValue) / 60, 1) & _
-                "<br>" & Round(pDicTotal(dtActualWorkTSVs)(varValue) / 60, 1) & _
-                "<br>" & Round(pDicTotal(dtBaselineWorkTSVs)(varValue) / 60, 1)
+                "<br>" & Round(pDicTotal(dtActualWorkTSVs)(varValue) / 60, 1)
             Next
         Debug.Print strOutput
         
@@ -430,4 +448,22 @@ Private Function GetClipboard() As String
         GetClipboard = sUniText
     End If
     CloseClipboard
+End Function
+Private Function IsInArray(valToBeFound As Variant, arr As Variant) As Boolean
+'DEVELOPER: Ryan Wells (wellsr.com)
+'DESCRIPTION: Function to check if a value is in an array of values
+'INPUT: Pass the function a value to search for and an array of values of any data type.
+'OUTPUT: True if is in array, false otherwise
+Dim element As Variant
+On Error GoTo IsInArrayError: 'array is empty
+    For Each element In arr
+        If element = valToBeFound Then
+            IsInArray = True
+            Exit Function
+        End If
+    Next element
+Exit Function
+IsInArrayError:
+On Error GoTo 0
+IsInArray = False
 End Function
