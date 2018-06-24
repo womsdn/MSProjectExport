@@ -90,7 +90,7 @@ End Enum
 '   dtVarianceWorkTotal - key for integer that contains total variance work for all asked resources in asked period
 
 
-Public Sub Create(rscResources As Resources, tskTasks As Tasks, Optional datStart As Date = #1/1/1901#, _
+Public Sub Create(rscResources As Collection, tskTasks As Collection, Optional datStart As Date = #1/1/1901#, _
     Optional datFinish As Date = #1/1/1901#, Optional intTimeScaleUnit As PjTimescaleUnit = pjTimescaleMonths)
     Dim rscResource As Resource
     Dim tskTask As Task

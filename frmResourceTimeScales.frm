@@ -14,8 +14,8 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
-Private tskTasks As Tasks
-Private rscResources As Resources
+Private tskTasks As Collection
+Private rscResources As Collection
 Private Sub cbStartExport_Click()
     'Initialize object
     Dim mycResourcetimeScales As cResourceTimeScales
@@ -28,18 +28,25 @@ Private Sub cbStartExport_Click()
     mycResourcetimeScales.Dump2MarkDown
 
 End Sub
-
 Public Sub UserForm_Initialize()
     Dim datFirstDate As Date
     Dim datLastDate As Date
     Dim tsk As Task
-    Dim rcs As Resource
+    Dim rsc As Resource
     Dim ass As Assignment
+    
+    Set tskTasks = New Collection
+    Set rscResources = New Collection
     
     'Determine tasks and resources to inspect based on viewtype (task or resrouce) and selected items
     If ActiveProject.Views(ActiveProject.CurrentView).Type = pjTaskItem Then
-        Set tskTasks = ActiveSelection.Tasks
-        Set rscResources = ActiveProject.Resources
+        For Each tsk In ActiveSelection.Tasks
+            tskTasks.Add tsk
+        Next
+        
+        For Each rsc In ActiveProject.Resources
+            rscResources.Add rsc
+        Next
         
         'Determine first and last date, based on selected tasks
         datFirstDate = tskTasks(1).Start
@@ -53,14 +60,20 @@ Public Sub UserForm_Initialize()
             End If
         Next
     ElseIf ActiveProject.Views(ActiveProject.CurrentView).Type = pjResourceItem Then
-        Set tskTasks = ActiveProject.Tasks
-        Set rscResources = ActiveSelection.Resources
+        
+        For Each tsk In ActiveProject.Tasks
+            tskTasks.Add tsk
+        Next
+        
+        For Each rsc In ActiveSelection.Resources
+            rscResources.Add rsc
+        Next
         
         'Determine first and last date, based on assignments of selected resources
         datFirstDate = rscResources(1).Assignments(1).Start
         datLastDate = rscResources(1).Assignments(1).Finish
-        For Each rcs In rscResources
-            For Each ass In rcs.Assignments
+        For Each rsc In rscResources
+            For Each ass In rsc.Assignments
                 If ass.Start < datFirstDate Then
                     datFirstDate = ass.Start
                 End If
