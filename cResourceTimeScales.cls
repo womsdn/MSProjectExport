@@ -409,6 +409,8 @@ Public Sub Dump2MarkDown()
         Debug.Print strOutput
         
         SetClipboard (strOutput)
+    Else
+        SetClipboard ("No assignments found!")
     End If
 End Sub
 Private Sub SetClipboard(sUniText As String)
